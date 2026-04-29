@@ -3,3 +3,7 @@ target/
 .idea/
 *.iml
 *.class
+.DS_Store
+tools/
+.m2/
+facebook/
