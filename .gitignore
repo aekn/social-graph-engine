@@ -7,3 +7,5 @@ target/
 tools/
 .m2/
 facebook/
+*.zip
+submission/

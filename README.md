@@ -100,7 +100,21 @@ src/main/java/com/socialgraph
 └── loader/DatasetLoader.java       # SNAP ego-Facebook -> Neo4j
 ```
 
-## Report
+## Submission packaging (ZIP)
 
-See [docs/REPORT.md](docs/REPORT.md) for the deliverable scaffold (schema, dataset description,
-all 11 Cypher queries, and screenshot placeholders).
+Create a clean source-code zip (excluding secrets, caches, and local tooling):
+
+```bash
+zip -r source-code.zip . \
+  -x "*.git*" ".env" ".m2/*" "target/*" "tools/*" "*.DS_Store"
+```
+
+If your course expects `projects.zip` containing both `report.pdf` and source code:
+
+```bash
+mkdir -p submission/source-code
+rsync -a . submission/source-code/ \
+  --exclude ".git" --exclude ".env" --exclude ".m2" --exclude "target" --exclude "tools" --exclude ".DS_Store"
+cp /path/to/report.pdf submission/report.pdf
+cd submission && zip -r ../projects.zip .
+```
