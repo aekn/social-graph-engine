@@ -1,120 +1,165 @@
 # Social Graph Engine
 
-A Java console social-networking application backed by **Neo4j** (Aura), built on top of the
-[SNAP ego-Facebook](https://snap.stanford.edu/data/ego-Facebook.html) dataset. Implements 11 use
-cases covering user management, social-graph features, and search/exploration.
+Graph Database Project using **Neo4j Aura + Java**.  
+This application models a social network with graph-native features such as follow/unfollow, mutual connections, recommendation traversal, search, and popularity ranking.
 
-## Architecture
+## Team Information
 
-- **Front-end:** Java 21 console app (`com.socialgraph.cli.ConsoleApp`).
-- **Back-end:** Neo4j 5.x via the official `neo4j-java-driver` 6.x.
-- **Schema:**
-  - `(:User {id, username, email, name, bio, passwordHash, createdAt})`
-  - `(:User)-[:FOLLOWS {since}]->(:User)` (directed)
-- **Constraints / index:** unique `User.id`, `User.username`, `User.email`; range index on `User.name`.
+- **Member 1:** Thilak Shekhar Shriyan (`thilak.shriyan@sjsu.edu`)
+- **Member 2:** `<Add Name>` (`<add_email>`)
+- **Member 3:** `<Add Name>` (`<add_email>`)
+
+Repository: `social-graph-engine`
+
+## Technology Stack
+
+- Front-end: Java console interface
+- Back-end: Neo4j Aura (cloud)
+- Driver: Neo4j Java Driver `6.0.5`
+- Build tool: Maven
+
+## Property Graph Schema
+
+- **Node:** `(:User {id, username, email, name, bio, passwordHash, createdAt})`
+- **Relationship:** `(:User)-[:FOLLOWS {since}]->(:User)`
+
+### Constraints and Index
+
+```cypher
+CREATE CONSTRAINT user_id IF NOT EXISTS
+  FOR (u:User) REQUIRE u.id IS UNIQUE;
+
+CREATE CONSTRAINT user_username IF NOT EXISTS
+  FOR (u:User) REQUIRE u.username IS UNIQUE;
+
+CREATE CONSTRAINT user_email IF NOT EXISTS
+  FOR (u:User) REQUIRE u.email IS UNIQUE;
+
+CREATE INDEX user_name IF NOT EXISTS
+  FOR (u:User) ON (u.name);
+```
+
+## Dataset
+
+- Source: [SNAP ego-Facebook](https://snap.stanford.edu/data/ego-Facebook.html)
+- Ego networks used: `0, 107, 348, 414, 686, 698, 1684, 1912, 3437, 3980`
+- Local folder: `facebook/`
+
+Each undirected friendship `{a, b}` is loaded as two directed edges:
+- `(a)-[:FOLLOWS]->(b)`
+- `(b)-[:FOLLOWS]->(a)`
+
+### Final Loaded Graph Size
+
+- Users (nodes): **4,039**
+- FOLLOWS (relationships): **176,468**
+
+This exceeds the assignment minimum requirements (1,000 nodes / 5,000 relationships).
+
+## Implemented Use Cases
+
+All 11 required use cases are implemented:
+
+1. User Registration
+2. User Login
+3. View Profile
+4. Edit Profile
+5. Follow Another User
+6. Unfollow a User
+7. View Following and Followers
+8. Mutual Connections
+9. Friend Recommendations
+10. Search Users
+11. Explore Popular Users
 
 ## Prerequisites
 
-- JDK 21 or newer
+- JDK 21+
 - Maven 3.9+
-- A Neo4j AuraDB (or local Neo4j 5.x) instance
+- Neo4j AuraDB instance (or local Neo4j 5.x)
 
-On macOS:
+## Environment Configuration
 
-```bash
-brew install openjdk@21 maven
-```
-
-## Configuration
-
-Copy `.env.example` to `.env` and fill in your Aura connection:
+Copy `.env.example` to `.env` and update values:
 
 ```dotenv
 NEO4J_URI=neo4j+s://<your-instance>.databases.neo4j.io
-NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=<password>
-# Optional for Aura. Leave empty to use the server default database.
+NEO4J_USERNAME=<your-username>
+NEO4J_PASSWORD=<your-password>
 NEO4J_DATABASE=
 ```
 
-## Build
+Leave `NEO4J_DATABASE` empty to use Aura default database.
+
+## Build and Run
+
+### Build
 
 ```bash
-mvn -q clean package
+mvn -q clean compile
 ```
 
-This produces `target/social-graph-engine-1.0-SNAPSHOT-jar-with-dependencies.jar`.
-
-## Loading the dataset (one-time)
-
-Download SNAP ego-Facebook from [SNAP](https://snap.stanford.edu/data/ego-Facebook.html), extract it,
-and place the extracted files in a local `facebook/` directory at the repository root
-(`facebook/0.edges`, `facebook/107.edges`, etc.). The dataset folder is intentionally not committed.
-
-Each undirected friendship is imported as **two** directed `FOLLOWS` edges (A→B and B→A),
-preserving Facebook's mutual-friendship semantics while satisfying the assignment's directed-edge
-requirement.
+### Load Dataset (one-time)
 
 ```bash
 mvn -q exec:java -Dexec.args="--load --reset"
 ```
 
-Expected output: ~4,039 users and ~176,000 `FOLLOWS` edges.
-
-## Running the app
+### Run Application
 
 ```bash
 mvn -q exec:java
 ```
 
-or, after `mvn package`:
+### Demo Accounts
 
-```bash
-java -jar target/social-graph-engine-1.0-SNAPSHOT-jar-with-dependencies.jar
-```
+Imported users follow this format:
+- Username: `user_<id>` (example: `user_0`, `user_107`)
+- Password: `password123`
 
-The console walks you through the pre-login menu (register / login) and then the post-login menu
-covering UC-3 through UC-11.
+Newly registered users use their own password from UC-1.
 
-### Demo accounts
+## Repository Structure
 
-Every imported user has username `user_<id>` (e.g. `user_0`, `user_107`) and a default password of
-`password123` — useful for graders to log in without registering. New users created via UC-1 use
-their own chosen password.
-
-## Repository layout
-
-```
+```text
 src/main/java/com/socialgraph
-├── Main.java                       # entry point (--load / --reset / --data)
-├── Config.java                     # dotenv-backed config
-├── DatabaseService.java            # driver wrapper + schema bootstrap
+├── Main.java
+├── Config.java
+├── DatabaseService.java
 ├── model/User.java
 ├── repository/
-│   ├── UserRepository.java         # CRUD, search, credentials lookup
-│   └── GraphRepository.java        # follow/unfollow/recommend/popular/mutual
+│   ├── UserRepository.java
+│   └── GraphRepository.java
 ├── service/
-│   ├── AuthService.java            # BCrypt register + login
-│   └── SocialService.java          # CLI-facing orchestration
-├── cli/ConsoleApp.java             # menus for all 11 use cases
-└── loader/DatasetLoader.java       # SNAP ego-Facebook -> Neo4j
+│   ├── AuthService.java
+│   └── SocialService.java
+├── cli/ConsoleApp.java
+└── loader/DatasetLoader.java
 ```
 
-## Submission packaging (ZIP)
+## Submission-Ready Checklist
 
-Create a clean source-code zip (excluding secrets, caches, and local tooling):
+- [ ] Fill Team Information placeholders in this README.
+- [ ] Ensure your `report.pdf` is finalized separately.
+- [ ] Confirm `.env` is not included in submission.
+- [ ] Confirm project builds and runs successfully.
+- [ ] Verify all 11 use cases are demonstrable.
+
+## Create Clean ZIP for Submission
+
+Create source-only zip:
 
 ```bash
 zip -r source-code.zip . \
-  -x "*.git*" ".env" ".m2/*" "target/*" "tools/*" "*.DS_Store"
+  -x "*.git*" ".env" ".m2/*" "target/*" "tools/*" "*.DS_Store" "*.zip" "submission/*"
 ```
 
-If your course expects `projects.zip` containing both `report.pdf` and source code:
+If submission requires one `projects.zip` containing both `report.pdf` and source code:
 
 ```bash
 mkdir -p submission/source-code
 rsync -a . submission/source-code/ \
-  --exclude ".git" --exclude ".env" --exclude ".m2" --exclude "target" --exclude "tools" --exclude ".DS_Store"
+  --exclude ".git" --exclude ".env" --exclude ".m2" --exclude "target" --exclude "tools" --exclude ".DS_Store" --exclude "*.zip" --exclude "submission"
 cp /path/to/report.pdf submission/report.pdf
 cd submission && zip -r ../projects.zip .
 ```
