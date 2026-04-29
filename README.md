@@ -136,30 +136,3 @@ src/main/java/com/socialgraph
 ├── cli/ConsoleApp.java
 └── loader/DatasetLoader.java
 ```
-
-## Submission-Ready Checklist
-
-- [ ] Fill Team Information placeholders in this README.
-- [ ] Ensure your `report.pdf` is finalized separately.
-- [ ] Confirm `.env` is not included in submission.
-- [ ] Confirm project builds and runs successfully.
-- [ ] Verify all 11 use cases are demonstrable.
-
-## Create Clean ZIP for Submission
-
-Create source-only zip:
-
-```bash
-zip -r source-code.zip . \
-  -x "*.git*" ".env" ".m2/*" "target/*" "tools/*" "*.DS_Store" "*.zip" "submission/*"
-```
-
-If submission requires one `projects.zip` containing both `report.pdf` and source code:
-
-```bash
-mkdir -p submission/source-code
-rsync -a . submission/source-code/ \
-  --exclude ".git" --exclude ".env" --exclude ".m2" --exclude "target" --exclude "tools" --exclude ".DS_Store" --exclude "*.zip" --exclude "submission"
-cp /path/to/report.pdf submission/report.pdf
-cd submission && zip -r ../projects.zip .
-```
